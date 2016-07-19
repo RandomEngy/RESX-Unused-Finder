@@ -26,5 +26,11 @@
     <Setting Name="ValueColumnWidth" Type="System.Double" Scope="User">
       <Value Profile="(Default)">350</Value>
     </Setting>
+    <Setting Name="UseRegex" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="ReferenceFormatsList" Type="System.Collections.Specialized.StringCollection" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
   </Settings>
 </SettingsFile>

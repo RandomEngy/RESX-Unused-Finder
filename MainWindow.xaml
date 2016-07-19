@@ -13,20 +13,20 @@
     Closing="Window_Closing">
     <Window.Resources>
         <Style x:Key="FieldLabel" TargetType="TextBlock">
-            <Setter Property="Margin" Value="4,0,4,0" />
+            <Setter Property="Margin" Value="4 0 4 0" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
         <Style x:Key="SectionHeader" TargetType="TextBlock">
-            <Setter Property="Margin" Value="0,0,0,0" />
+            <Setter Property="Margin" Value="0 0 0 0" />
             <Setter Property="FontWeight" Value="Bold" />
         </Style>
         <Style x:Key="BrowseButton" TargetType="Button">
-            <Setter Property="Margin" Value="6,0,0,0" />
-            <Setter Property="Padding" Value="6,1" />
+            <Setter Property="Margin" Value="6 0 0 0" />
+            <Setter Property="Padding" Value="6 1" />
         </Style>
         <Style x:Key="ActionButton" TargetType="Button">
-            <Setter Property="Margin" Value="6,0,0,0" />
-            <Setter Property="Padding" Value="6,1" />
+            <Setter Property="Margin" Value="6 0 0 0" />
+            <Setter Property="Padding" Value="6 1" />
         </Style>
         <Style x:Key="Field" TargetType="TextBox">
             <Setter Property="VerticalAlignment" Value="Center" />
@@ -36,7 +36,7 @@
             <Setter Property="TextWrapping" Value="Wrap" />
         </Style>
     </Window.Resources>
-    <Grid>
+    <Grid Name="RootGrid">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition />
@@ -55,7 +55,7 @@
                             <TextBlock Style="{StaticResource LongToolTip}" Text="The root project folder that contains all possible string references." />
                         </Grid.ToolTip>
                         <TextBlock
-                            Margin="0,0,6,0"
+                            Margin="0 0 6 0"
                             Style="{StaticResource FieldLabel}"
                             Text="Project folder:" />
 
@@ -69,7 +69,7 @@
                     </Grid>
 
                     <TextBlock
-                        Margin="0,8,0,0"
+                        Margin="0 8 0 0"
                         Style="{StaticResource SectionHeader}"
                         Text="Definitions" />
 
@@ -91,13 +91,13 @@
                     </Grid>
 
                     <TextBlock
-                        Margin="0,8,0,0"
+                        Margin="0 8 0 0"
                         Style="{StaticResource SectionHeader}"
                         Text="References" />
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="24" />
-                            <RowDefinition Height="24" />
+                            <RowDefinition Height="Auto" />
                             <RowDefinition Height="24" />
                         </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
@@ -124,17 +124,79 @@
                             </TextBox.ToolTip>
                         </TextBox>
 
-                        <TextBlock
+                        <StackPanel
                             Grid.Row="1"
                             Grid.Column="0"
-                            Style="{StaticResource FieldLabel}"
-                            Text="Reference Formats:"
-                            ToolTipService.ShowDuration="20000">
-                            <TextBlock.ToolTip>
-                                <TextBlock Style="{StaticResource LongToolTip}" Text="{x:Static prop:Resources.ReferenceFormatsToolTip}" />
-                            </TextBlock.ToolTip>
-                        </TextBlock>
-                        <TextBox
+                            VerticalAlignment="Top"
+                            Orientation="Vertical">
+                            <TextBlock
+                                Style="{StaticResource FieldLabel}"
+                                Text="Reference Formats:"
+                                ToolTipService.ShowDuration="20000">
+                                <TextBlock.ToolTip>
+                                    <TextBlock Style="{StaticResource LongToolTip}" Text="{x:Static prop:Resources.ReferenceFormatsToolTip}" />
+                                </TextBlock.ToolTip>
+                            </TextBlock>
+                            <CheckBox
+                                Margin="10 2 0 0"
+                                Content="Use Regex"
+                                IsChecked="{Binding UseRegex}" />
+                        </StackPanel>
+
+                        <StackPanel
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            Orientation="Vertical">
+                            <ItemsControl Canvas.ZIndex="3" ItemsSource="{Binding ReferenceFormats}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Vertical" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBox Text="{Binding Value}" />
+                                            <Button
+                                                Grid.Column="1"
+                                                Margin="2 0 0 0"
+                                                Command="{Binding DataContext.RemoveReferenceFormatCommand,
+                                                                  ElementName=RootGrid}"
+                                                CommandParameter="{Binding}"
+                                                Content="X"
+                                                FontWeight="Bold"
+                                                Foreground="Red"
+                                                Padding="4 0"
+                                                ToolTip="Remove reference format"
+                                                Visibility="{Binding DataContext.CanRemoveReferenceFormat,
+                                                                     ElementName=RootGrid,
+                                                                     Converter={StaticResource VisibilityConverter}}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <Button
+                                HorizontalAlignment="Left"
+                                Canvas.ZIndex="2"
+                                Command="{Binding AddReferenceFormatCommand}"
+                                Padding="5 0">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock
+                                        Margin="0 -10 2 -4"
+                                        FontSize="23"
+                                        FontWeight="Bold"
+                                        Foreground="Green"
+                                        Text="+" />
+                                    <TextBlock Text="Add reference format" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+
+                        <!--<TextBox
                             Grid.Row="1"
                             Grid.Column="1"
                             Style="{StaticResource Field}"
@@ -143,7 +205,7 @@
                             <TextBox.ToolTip>
                                 <TextBlock Style="{StaticResource LongToolTip}" Text="{x:Static prop:Resources.ReferenceFormatsToolTip}" />
                             </TextBox.ToolTip>
-                        </TextBox>
+                        </TextBox>-->
 
                         <TextBlock
                             Grid.Row="2"
@@ -167,7 +229,7 @@
                         </TextBox>
                     </Grid>
 
-                    <Grid Margin="0,8,0,0">
+                    <Grid Margin="0 8 0 0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition />
                             <ColumnDefinition Width="Auto" />
@@ -180,16 +242,19 @@
                                         Width="16"
                                         Height="16"
                                         Source="/Icons/refresh.png" />
-                                    <TextBlock Margin="2,0,0,0" Text="Refresh" />
+                                    <TextBlock Margin="2 0 0 0" Text="Refresh" />
                                 </StackPanel>
                             </Button>
-                            <Button Command="{Binding CopyCommand}" Style="{StaticResource ActionButton}" UseLayoutRounding="True">
+                            <Button
+                                Command="{Binding CopyCommand}"
+                                Style="{StaticResource ActionButton}"
+                                UseLayoutRounding="True">
                                 <StackPanel Orientation="Horizontal">
                                     <Image
                                         Width="16"
                                         Height="16"
                                         Source="/Icons/copy.png" />
-                                    <TextBlock Margin="2,0,0,0" Text="Copy" />
+                                    <TextBlock Margin="2 0 0 0" Text="Copy" />
                                 </StackPanel>
                             </Button>
                             <Button Command="{Binding DeleteAllCommand}" Style="{StaticResource ActionButton}">
@@ -198,7 +263,7 @@
                                         Width="16"
                                         Height="16"
                                         Source="/Icons/delete.png" />
-                                    <TextBlock Margin="2,0,0,0" Text="Delete All" />
+                                    <TextBlock Margin="2 0 0 0" Text="Delete All" />
                                 </StackPanel>
                             </Button>
                         </StackPanel>
@@ -206,7 +271,7 @@
                             Grid.Column="1"
                             Orientation="Horizontal"
                             Visibility="{Binding ItemsSelected,
-                                                         Converter={StaticResource VisibilityConverter}}">
+                                                 Converter={StaticResource VisibilityConverter}}">
                             <Button
                                 Command="{Binding ExcludeSelectedCommand}"
                                 Content="Exclude Selected"
@@ -217,7 +282,7 @@
                                         Width="16"
                                         Height="16"
                                         Source="/Icons/delete.png" />
-                                    <TextBlock Margin="2,0,0,0" Text="Delete Selected" />
+                                    <TextBlock Margin="2 0 0 0" Text="Delete Selected" />
                                 </StackPanel>
                             </Button>
                         </StackPanel>

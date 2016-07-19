@@ -85,6 +85,7 @@
     <Compile Include="DispatchService.cs" />
     <Compile Include="Exceptions\FileException.cs" />
     <Compile Include="Exceptions\ParseException.cs" />
+    <Compile Include="ReferenceFormatViewModel.cs" />
     <Compile Include="StringResource.cs" />
     <Compile Include="WindowPlacement.cs" />
     <Page Include="MainWindow.xaml">

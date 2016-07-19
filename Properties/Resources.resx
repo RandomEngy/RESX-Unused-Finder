@@ -121,7 +121,7 @@
     <value>A comma-separated list of file extensions to search for references in. (ex: .cs,.xaml)</value>
   </data>
   <data name="ReferenceFormatsToolTip" xml:space="preserve">
-    <value>Comma-separated list of reference formats. Use % for the resource name placeholder. For example if you access your resources with AppResources.MyResourceName, use AppResources.% . Any matches to this format will count as a resource use.</value>
+    <value>How the resources are referenced. Use % for the resource name placeholder. For example if you access your resources with AppResources.MyResourceName, use AppResources.% . Any matches to this format will count as a resource use.</value>
   </data>
   <data name="ExcludedPrefixesToolTip" xml:space="preserve">
     <value>A comma-separated list of key prefixes to exclude. If you construct resource keys on-the-fly you might have some that don't get directly referenced by the code. Any keys that have one of the given prefixes will be considered 'used'.</value>

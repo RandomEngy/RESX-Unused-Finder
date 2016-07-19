@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -26,33 +28,69 @@ namespace ResxUnusedFinder
         private List<string> extensionList;
         private List<string> referenceFormatList;
         private List<string> excludePrefixesList;
+        private Dictionary<string, Regex> regexCache;
 
         public MainViewModel()
         {
             this.ProjectFolder = Settings.Default.ProjectFolder;
             this.ResourceFile = Settings.Default.ResourceFile;
             this.Extensions = Settings.Default.Extensions;
-            this.ReferenceFormats = Settings.Default.ReferenceFormats;
             this.ExcludePrefixes = Settings.Default.ExcludePrefixes;
+            this.UseRegex = Settings.Default.UseRegex;
+
+            this.regexCache = new Dictionary<string, Regex>();
+
+            StringCollection settingsReferenceFormatList = Settings.Default.ReferenceFormatsList;
+            if (settingsReferenceFormatList == null || settingsReferenceFormatList.Count == 0)
+            {
+                string oldReferenceFormats = Settings.Default.ReferenceFormats;
+
+                if (string.IsNullOrEmpty(oldReferenceFormats))
+                {
+                    this.ReferenceFormats = new ObservableCollection<ReferenceFormatViewModel>
+                    {
+                        new ReferenceFormatViewModel { Value = "AppResources.%" }
+                    };
+                }
+                else
+                {
+                    this.ReferenceFormats = new ObservableCollection<ReferenceFormatViewModel>(
+                        oldReferenceFormats
+                            .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                            .Select(format => new ReferenceFormatViewModel { Value = format }));
+                }
+            }
+            else
+            {
+                this.ReferenceFormats = new ObservableCollection<ReferenceFormatViewModel>();
+                foreach (string referenceFormat in Settings.Default.ReferenceFormatsList)
+                {
+                    this.ReferenceFormats.Add(new ReferenceFormatViewModel { Value = referenceFormat });
+                }
+            }
+
+            this.RaisePropertyChanged(nameof(this.CanRemoveReferenceFormat));
 
             if (string.IsNullOrEmpty(this.Extensions))
             {
                 this.Extensions = ".cs,.xaml";
             }
-
-            if (string.IsNullOrEmpty(this.ReferenceFormats))
-            {
-                this.ReferenceFormats = "AppResources.%";
-            }
         }
 
         public void OnClose()
         {
+            var referenceFormatsList = new StringCollection();
+            foreach (string format in this.ReferenceFormats.Select(f => f.Value))
+            {
+                referenceFormatsList.Add(format);
+            }
+
             Settings.Default.ProjectFolder = this.ProjectFolder;
             Settings.Default.ResourceFile = this.ResourceFile;
             Settings.Default.Extensions = this.Extensions;
-            Settings.Default.ReferenceFormats = this.ReferenceFormats;
+            Settings.Default.ReferenceFormatsList = referenceFormatsList;
             Settings.Default.ExcludePrefixes = this.ExcludePrefixes;
+            Settings.Default.UseRegex = this.UseRegex;
         }
 
         private string projectFolder;
@@ -76,12 +114,7 @@ namespace ResxUnusedFinder
             set { this.Set(ref this.extensions, value); }
         }
 
-        private string referenceFormats;
-        public string ReferenceFormats
-        {
-            get { return this.referenceFormats; }
-            set { this.Set(ref this.referenceFormats, value); }
-        }
+        public ObservableCollection<ReferenceFormatViewModel> ReferenceFormats { get; }
 
         private string excludePrefixes;
         public string ExcludePrefixes
@@ -130,8 +163,19 @@ namespace ResxUnusedFinder
             get { return this.UnusedResources != null && this.UnusedResources.Any(r => r.IsSelected); }
         }
 
-        private RelayCommand browseFolderCommand;
+        public bool CanRemoveReferenceFormat
+        {
+            get { return this.ReferenceFormats.Count > 1; }
+        }
 
+        private bool useRegex;
+        public bool UseRegex
+        {
+            get { return this.useRegex; }
+            set { this.Set(ref this.useRegex, value); }
+        }
+
+        private RelayCommand browseFolderCommand;
         public RelayCommand BrowseFolderCommand
         {
             get
@@ -158,7 +202,6 @@ namespace ResxUnusedFinder
         }
 
         private RelayCommand browseResourceFileCommand;
-
         public RelayCommand BrowseResourceFileCommand
         {
             get
@@ -185,8 +228,35 @@ namespace ResxUnusedFinder
             }
         }
 
-        private RelayCommand refreshCommand;
+        private RelayCommand addReferenceFormatCommand;
+        public RelayCommand AddReferenceFormatCommand
+        {
+            get
+            {
+                return this.addReferenceFormatCommand ?? (this.addReferenceFormatCommand = new RelayCommand(
+                    () =>
+                    {
+                        this.ReferenceFormats.Add(new ReferenceFormatViewModel { Value = string.Empty });
+                        this.RaisePropertyChanged(nameof(this.CanRemoveReferenceFormat));
+                    }));
+            }
+        }
 
+        private RelayCommand<ReferenceFormatViewModel> removeReferenceFormatCommand;
+        public RelayCommand<ReferenceFormatViewModel> RemoveReferenceFormatCommand
+        {
+            get
+            {
+                return this.removeReferenceFormatCommand ?? (this.removeReferenceFormatCommand = new RelayCommand<ReferenceFormatViewModel>(
+                    vm =>
+                    {
+                        this.ReferenceFormats.Remove(vm);
+                        this.RaisePropertyChanged(nameof(this.CanRemoveReferenceFormat));
+                    }));
+            }
+        }
+
+        private RelayCommand refreshCommand;
         public RelayCommand RefreshCommand
         {
             get
@@ -207,7 +277,6 @@ namespace ResxUnusedFinder
         }
 
         private RelayCommand copyCommand;
-
         public RelayCommand CopyCommand
         {
             get
@@ -229,7 +298,6 @@ namespace ResxUnusedFinder
         }
 
         private RelayCommand deleteSelectedCommand;
-
         public RelayCommand DeleteSelectedCommand
         {
             get
@@ -247,7 +315,6 @@ namespace ResxUnusedFinder
         }
 
         private RelayCommand deleteAllCommand;
-
         public RelayCommand DeleteAllCommand
         {
             get
@@ -271,7 +338,6 @@ namespace ResxUnusedFinder
         }
 
         private RelayCommand excludeSelectedCommand;
-
         public RelayCommand ExcludeSelectedCommand
         {
             get
@@ -299,7 +365,6 @@ namespace ResxUnusedFinder
         }
 
         private RelayCommand<SelectionChangedEventArgs> onSelectionChangedCommand;
-
         public RelayCommand<SelectionChangedEventArgs> OnSelectionChangedCommand
         {
             get
@@ -315,6 +380,11 @@ namespace ResxUnusedFinder
         {
             try
             {
+                if (!this.ValidateRegexPatterns())
+                {
+                    return;
+                }
+
                 this.Working = true;
 
                 this.PopulateSearchList();
@@ -370,7 +440,7 @@ namespace ResxUnusedFinder
 
             this.Status = "Finding unused keys...";
 
-            this.referenceFormatList = this.ReferenceFormats.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+            this.referenceFormatList = this.ReferenceFormats.Select(f => f.Value).Where(v => !string.IsNullOrWhiteSpace(v)).ToList();
 
             foreach (string file in this.files)
             {
@@ -391,6 +461,30 @@ namespace ResxUnusedFinder
             this.PopulateUnusedResourceValues();
 
             this.Status = "Found " + this.UnusedResources.Count + " unused resource(s).";
+        }
+
+        private bool ValidateRegexPatterns()
+        {
+            if (!this.UseRegex)
+            {
+                return true;
+            }
+
+            foreach (string format in this.ReferenceFormats.Select(f => f.Value))
+            {
+                string testPattern = format.Replace("%", "Test");
+                try
+                {
+                    var regex = new Regex(testPattern);
+                }
+                catch (Exception)
+                {
+                    MessageBox.Show("Regex is not valid: " + format);
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private void PopulateUnusedResourceValues()
@@ -472,7 +566,24 @@ namespace ResxUnusedFinder
                 {
                     string searchString = referenceFormat.Replace("%", key);
 
-                    if (fileText.Contains(searchString))
+                    bool fileHasMatch;
+                    if (this.UseRegex)
+                    {
+                        Regex regex;
+                        if (!this.regexCache.TryGetValue(searchString, out regex))
+                        {
+                            regex = new Regex(searchString);
+                            this.regexCache.Add(searchString, regex);
+                        }
+
+                        fileHasMatch = regex.IsMatch(fileText);
+                    }
+                    else
+                    {
+                        fileHasMatch = fileText.Contains(searchString);
+                    }
+
+                    if (fileHasMatch)
                     {
                         foundResources.Add(key);
                         break;
