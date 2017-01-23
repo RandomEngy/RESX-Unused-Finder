@@ -557,7 +557,7 @@ namespace ResxUnusedFinder
         // Finds instances of resourceKeys in the given file and removes them from the collection if they are found
         private void RemoveFoundKeys(string filePath)
         {
-            string fileText = File.ReadAllText(filePath);
+            string fileText = File.ReadAllText(filePath, Encoding.Default);
             var foundResources = new List<string>();
 
             foreach (string key in this.resourceKeys)
