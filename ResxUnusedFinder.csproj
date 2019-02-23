@@ -26,6 +26,7 @@
     <UpdateRequired>false</UpdateRequired>
     <MapFileExtensions>true</MapFileExtensions>
     <InstallUrl>https://raw.githubusercontent.com/Microsoft/RESX-Unused-Finder/master/publish/</InstallUrl>
+    <UpdateUrl>https://raw.githubusercontent.com/Microsoft/RESX-Unused-Finder/master/publish/</UpdateUrl>
     <CreateWebPageOnPublish>true</CreateWebPageOnPublish>
     <WebPage>publish.htm</WebPage>
     <ApplicationRevision>4</ApplicationRevision>
